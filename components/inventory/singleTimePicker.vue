@@ -3,7 +3,7 @@
     ref="dialog"
     v-model="timePicker"
     :return-value.sync="pickedTime"
-    :readonly="readonly"
+    :disabled="readonly"
     persistent
     width="290px"
   >

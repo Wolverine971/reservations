@@ -1,9 +1,14 @@
 <template>
-  <v-dialog v-model="dialog" width="500">
+  <v-dialog v-model="dialog" width="500" :disabled="error">
     <template #activator="{ on, attrs }">
-      <v-btn color="blue lighten-2" dark v-bind="attrs" v-on="on">
-        Create Reservation
-      </v-btn>
+      <div v-bind="attrs" class="btn-col" v-on="on">
+        <v-btn color="blue lighten-2" :disabled="error">
+          Create Reservation
+        </v-btn>
+        <p v-if="error" class="res-error">
+          {{ error }}
+        </p>
+      </div>
     </template>
     <v-card>
       <v-card-title>Create Reservation</v-card-title>
@@ -74,8 +79,19 @@ export default {
   name: 'CreateReservation',
   data () {
     return {
-      monthNames: ['January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
+      monthNames: [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
       ],
       events: [],
       name: '',
@@ -84,14 +100,14 @@ export default {
         v => !!v || 'E-mail is required',
         v => /.+@.+/.test(v) || 'E-mail must be valid'
       ],
-      time: null,
       dialog: false,
       partySize: 0,
       selectedMonth: null,
       selectedDay: null,
       selectedTime: null,
       timeSlot: null,
-      monthIndex: 0
+      monthIndex: 0,
+      error: null
     }
   },
   computed: {
@@ -126,19 +142,28 @@ export default {
     },
     timeOptions () {
       if (this.selectedDay) {
-        const availableTimes = this.availableDates.map((date) => {
-          if (this.monthNames[date.start.getMonth()] === this.selectedMonth && date.start.getDate() === this.selectedDay) {
-            // brute force check
-            if (this.checkAvailable(date)) {
-              const start = `${date.start.getHours()}:${date.start.getMinutes() ? date.start.getMinutes() : '00'}`
-              const end = `${date.end.getHours()}:${date.end.getMinutes() ? date.end.getMinutes() : '00'}`
-              return `${start} ~ ${end}`
-            } else {
-              return []
+        const availableTimes = this.availableDates
+          .map((date) => {
+            if (
+              this.monthNames[date.start.getMonth()] === this.selectedMonth &&
+              date.start.getDate() === this.selectedDay
+            ) {
+              // brute force check
+              if (this.checkAvailable(date)) {
+                const start = `${date.start.getHours()}:${
+                  date.start.getMinutes() ? date.start.getMinutes() : '00'
+                }`
+                const end = `${date.end.getHours()}:${
+                  date.end.getMinutes() ? date.end.getMinutes() : '00'
+                }`
+                return `${start} ~ ${end}`
+              } else {
+                return []
+              }
             }
-          }
-          return []
-        }).filter(t => t.length)
+            return []
+          })
+          .filter(t => t.length)
         return availableTimes
       } else {
         return []
@@ -147,15 +172,25 @@ export default {
   },
   watch: {
     selectedTime (val) {
-      const timeSlot = this.availableDates.filter(date =>
-        this.monthNames[date.start.getMonth()] === this.selectedMonth &&
-      date.start.getDate() === this.selectedDay && val.split(':')[0] === date.start.getHours().toString())
+      const timeSlot = this.availableDates.filter(
+        date =>
+          this.monthNames[date.start.getMonth()] === this.selectedMonth &&
+          date.start.getDate() === this.selectedDay &&
+          val.split(':')[0] === date.start.getHours().toString()
+      )
       this.timeSlot = timeSlot.length ? timeSlot[0] : null
     },
     selectedMonth (val) {
       this.monthIndex = this.monthNames.indexOf(val)
+    },
+    dialog (val) {
+      if (val) {
+        this.checkInventory(this.availableDates)
+      }
     }
-
+  },
+  mounted () {
+    this.checkInventory(this.availableDates)
   },
   methods: {
     save () {
@@ -171,6 +206,7 @@ export default {
       }
       this.$emit('reservationCreated', [newReservation])
       this.dialog = false
+      this.clearData()
     },
     checkAvailable (selectedInventory) {
       const reservationDates = {}
@@ -181,14 +217,41 @@ export default {
           reservationDates[r.start] += 1
         }
       })
-      if (!reservationDates[selectedInventory.start] || reservationDates[selectedInventory.start] < selectedInventory.inventory) {
+      if (
+        !reservationDates[selectedInventory.start] ||
+        reservationDates[selectedInventory.start] < selectedInventory.inventory
+      ) {
         return true
       } else {
         return false
       }
+    },
+    checkInventory (inventory) {
+      if (inventory.length === 0) {
+        this.error = 'No Inventory Available'
+      } else {
+        this.error = null
+      }
+    },
+    clearData () {
+      this.name = ''
+      this.email = ''
+      this.partySize = 0
+      this.selectedMonth = null
+      this.selectedDay = null
+      this.selectedTime = null
+      this.timeSlot = null
     }
   }
 }
 </script>
 
-<style></style>
+<style>
+.res-error {
+  color: red;
+}
+.btn-col{
+  display: flex;
+  flex-direction: column;
+}
+</style>

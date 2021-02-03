@@ -52,19 +52,7 @@ export const getters = {
         const date = i.start.getDate()
         const time = `${i.start.getHours()}:${i.start.getMinutes()}`
         const reservations = i.reservationAvailable
-        inventory[month] = Object.assign({}, {
-          [month]: Object.assign({}, {
-            [date]: Object.assign({},
-              {
-                [time]: reservations
-              },
-              inventory[month][date][time]
-            )
-          },
-          inventory[month][date]
-          )
-        },
-        inventory[month])
+        inventory[month][date][time] = reservations
       })
       return inventory
     } else {

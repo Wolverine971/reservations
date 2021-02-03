@@ -87,6 +87,7 @@ export default {
       }
       this.$emit('inventoryCreated', events)
       this.dialog = false
+      this.clearData()
     },
     increment () {
       this.reservationsCount = parseInt(this.reservationsCount, 10) + 1
@@ -102,6 +103,14 @@ export default {
       newDate.setHours(startTimes[0])
       newDate.setMinutes(startTimes[1])
       return newDate
+    },
+    clearData () {
+      this.name = ''
+      const currentDate = getFormattedDate()
+      this.dates = [currentDate, currentDate]
+      const currentTime = getFormattedTime()
+      this.times = `${currentTime} ~ ${currentTime}`
+      this.reservationsCount = 0
     }
   }
 }

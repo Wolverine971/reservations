@@ -38,12 +38,20 @@
         @click:date="viewDay"
       />
       <v-menu
-        v-model="selectedOpen"
+        v-model="selectedReservationOpen"
         :close-on-content-click="false"
         :activator="selectedElement"
         offset-x
       >
-        <reservation-detail :selected-event="selectedEvent" @updateEvent="updateReservation" />
+        <reservation-detail :selected-event="selectedReservation" @updateEvent="updateReservation" />
+      </v-menu>
+      <v-menu
+        v-model="selectedInventoryOpen"
+        :close-on-content-click="false"
+        :activator="selectedElement"
+        offset-x
+      >
+        <event-detail :selected-event="selectedInventory" @updateEvent="updateInventory" />
       </v-menu>
     </v-sheet>
   </div>
@@ -64,8 +72,11 @@ export default {
       value: '',
       events: [],
       selectedEvent: {},
+      selectedReservation: {},
+      selectedReservationOpen: false,
+      selectedInventory: {},
+      selectedInventoryOpen: false,
       selectedElement: null,
-      selectedOpen: false,
       focus: ''
     }
   },
@@ -84,11 +95,19 @@ export default {
     },
     showEvent ({ nativeEvent, event }) {
       const open = () => {
-        this.selectedEvent = event
-        this.selectedElement = nativeEvent.target
-        setTimeout(() => {
-          this.selectedOpen = true
-        }, 10)
+        if (event.email) {
+          this.selectedReservation = event
+          this.selectedElement = nativeEvent.target
+          setTimeout(() => {
+            this.selectedReservationOpen = true
+          }, 10)
+        } else {
+          this.selectedInventory = event
+          this.selectedElement = nativeEvent.target
+          setTimeout(() => {
+            this.selectedInventoryOpen = true
+          }, 10)
+        }
       }
 
       if (this.selectedOpen) {
@@ -116,8 +135,23 @@ export default {
       const replacement = Object.assign({}, target, event)
       //   this.selectedEvent = Object.assign({}, this.selectedEvent, event)
       this.events.splice(index, 1, replacement)
-      this.selectedOpen = false
+      this.selectedReservationOpen = false
       this.$store.commit('replaceReservations', this.events)
+    },
+    updateInventory (event) {
+      let index = 0
+      let target = {}
+      this.events.forEach((e, i) => {
+        if (e.id === event.id) {
+          index = i
+          target = e
+        }
+      })
+      const replacement = Object.assign({}, target, event)
+      //   this.selectedEvent = Object.assign({}, this.selectedEvent, event)
+      this.events.splice(index, 1, replacement)
+      this.selectedInventoryOpen = false
+      this.$store.commit('replaceInventory', this.events)
     }
   }
 }
